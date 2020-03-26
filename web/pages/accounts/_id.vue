@@ -36,7 +36,7 @@
             <b-form-input
               id="input-1"
               size="sm"
-              v-model="payment.to"
+              v-model.number="payment.to"
               type="number"
               required
               placeholder="Destination ID"
@@ -47,8 +47,10 @@
             <b-input-group prepend="$" size="sm">
               <b-form-input
                 id="input-2"
-                v-model="payment.amount"
+                v-model.number="payment.amount"
                 type="number"
+                :max="account.balance"
+                :min="1"
                 required
                 placeholder="Amount"
               ></b-form-input>
@@ -80,11 +82,20 @@
 import axios from "axios";
 import Vue from "vue";
 
+const INITIAL_PAYMENT = {
+  to: null,
+  amount: null,
+  details: null
+}
+
 export default {
   data() {
     return {
       show: false,
-      payment: {},
+      payment: {
+        from: this.$route.params.id,
+        ...INITIAL_PAYMENT
+      },
 
       account: null,
       transactions: null,
@@ -176,7 +187,7 @@ export default {
         this.payment
       );
 
-      that.payment = {};
+      that.payment =  { from: that.currentId, ...INITIAL_PAYMENT };
       that.show = false;
 
       // update items
