@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class Account extends Model
 {
-    protected $fillable = [ 'balance' ];
+    protected $fillable = [ 'name', 'balance' ];
 
     public $timestamps = false;
 

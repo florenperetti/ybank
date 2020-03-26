@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Validator;
 
 use App\Account;
 use App\Transaction;
@@ -35,14 +36,17 @@ class TransactionsController extends Controller
         if ($account->balance < $request->input('amount')) {
             return response()->json([ 'status' => 'failed', 'message' => 'Enter a valid amount' ], 400);
         }
-        $validatedData = $request->validate([
+        $validator = Validator::make($request->all(), [
             'from' => 'required|exists:accounts,id',
             'to' => 'required|exists:accounts,id',
             'amount' => 'required|min:1',
             'details' => 'required'
         ]);
 
-        $newTransaction = Transaction::create($validatedData);
+        if ($validator->fails()) {
+            return response()->json($validator->errors(), 422);
+        }
+        $newTransaction = Transaction::create($validator->validated());
 
         return response()->json($newTransaction->load(['accountFrom', 'accountTo']));
     }
