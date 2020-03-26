@@ -93,7 +93,7 @@ export default {
     return {
       show: false,
       payment: {
-        from: this.$route.params.id,
+        from: Number(this.$route.params.id),
         ...INITIAL_PAYMENT
       },
 
@@ -115,8 +115,8 @@ export default {
       }
       return this.transactions.map(({ id, to, from, account_to, account_from, ...data }) => ({
         id,
-        to: account_to.name + this.appendMe(to),
         from: account_from.name + this.appendMe(from),
+        to: account_to.name + this.appendMe(to),
         ...data
       }));
     }
@@ -174,59 +174,19 @@ export default {
       return id === this.accountId ? ' (Me)' : '';
     },
 
-    onSubmit(evt) {
-      var that = this;
-
+    async onSubmit(evt) {
       evt.preventDefault();
+      try {
+        const result = await axios.post(
+          `http://localhost:8000/api/accounts/${this.accountId}/transactions`,
+          this.payment
+        );
+        this.payment = { from: this.currentId, ...INITIAL_PAYMENT };
+        this.transactions.push(result);
+        this.show = false;
+      } catch (error) {
 
-      axios.post(
-        `http://localhost:8000/api/accounts/${
-          this.accountId
-        }/transactions`,
-
-        this.payment
-      );
-
-      that.payment =  { from: that.currentId, ...INITIAL_PAYMENT };
-      that.show = false;
-
-      // update items
-      setTimeout(() => {
-        axios
-          .get(`http://localhost:8000/api/accounts/${this.accountId}`)
-          .then(function(response) {
-            if (!response.data.length) {
-              window.location = "/";
-            } else {
-              that.account = response.data[0];
-            }
-          });
-
-        axios
-          .get(
-            `http://localhost:8000/api/accounts/${
-              that.accountId
-            }/transactions`
-          )
-          .then(function(response) {
-            that["transactions"] = response.data;
-
-            var transactions = [];
-            for (let i = 0; i < that.transactions.length; i++) {
-              that.transactions[i].amount =
-                (that.account.currency === "usd" ? "$" : "€") +
-                that.transactions[i].amount;
-
-              if (that.account.id != that.transactions[i].to) {
-                that.transactions[i].amount = "-" + that.transactions[i].amount;
-              }
-
-              transactions.push(that.transactions[i]);
-            }
-
-            that.transactions = transactions;
-          });
-      }, 200);
+      }
     }
   }
 };
