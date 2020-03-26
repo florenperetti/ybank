@@ -18,4 +18,6 @@ Route::get('accounts/{account}', 'AccountsController@show');
 
 Route::get('accounts/{id}/transactions', 'TransactionsController@index');
 
-Route::post('accounts/{id}/transactions', 'TransactionsController@store');
+Route::middleware('throttle:10,1')->group(function () {
+    Route::post('accounts/{id}/transactions', 'TransactionsController@store');
+});
