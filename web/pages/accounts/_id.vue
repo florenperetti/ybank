@@ -98,13 +98,33 @@ export default {
         ...INITIAL_PAYMENT
       },
 
-      account: null,
-      transactions: null,
-
       loading: true,
 
       errorMessage: null
     };
+  },
+
+  asyncData ({ params, error, $axios }) {
+    const promises = [
+      $axios.get(`http://localhost:8000/api/accounts/${params.id}`),
+      $axios.get(`http://localhost:8000/api/accounts/${params.id}/transactions`)
+    ]
+    return Promise.all(promises)
+      .then(response => {
+        const [ accountResponse, transactionsResponse ] = response;
+        return {
+          account: accountResponse.data[0],
+          transactions: transactionsResponse.data
+        }
+      })
+      .catch((e) => {
+        error({ statusCode: 404, message: 'Not found' })
+      });
+  },
+
+  async created () {
+    this.transactions = this.transactions.map(this.formatTransactions);
+    this.loading = false;
   },
 
   computed: {
@@ -122,30 +142,6 @@ export default {
         to: account_to.name + this.appendMe(to),
         ...data
       }));
-    }
-  },
-
-  async mounted () {
-    try {
-      const promises = [
-        axios.get(`http://localhost:8000/api/accounts/${this.accountId}`),
-        axios.get(`http://localhost:8000/api/accounts/${this.$route.params.id}/transactions`)
-      ]
-
-      const [ accountResponse, transactionsResponse ] = await Promise.all(promises);
-      if (!accountResponse.data.length) {
-        window.location = "/";
-      } else {
-        this.account = accountResponse.data[0];
-        if (this.account && this.transactions) {
-          this.loading = false;
-        }
-      }
-      this.transactions = transactionsResponse.data.map(this.formatTransactions);
-      if (this.account && this.transactions) {
-        this.loading = false;
-      }
-    } catch (error) {
     }
   },
 
