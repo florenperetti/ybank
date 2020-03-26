@@ -94,14 +94,18 @@ export default {
   },
 
   computed: {
-    transactionsFormatted () {
+    accountId() {
+      return Number(this.$route.params.id);
+    },
+
+    transactionsFormatted() {
       if (!this.transactions) {
         return null
       }
       return this.transactions.map(({ id, to, from, account_to, account_from, ...data }) => ({
         id,
-        to: account_to.name,
-        from: account_from.name,
+        to: account_to.name + this.appendMe(to),
+        from: account_from.name + this.appendMe(from),
         ...data
       }));
     }
@@ -111,7 +115,7 @@ export default {
     const that = this;
 
     axios
-      .get(`http://localhost:8000/api/accounts/${this.$route.params.id}`)
+      .get(`http://localhost:8000/api/accounts/${this.accountId}`)
       .then(function(response) {
         if (!response.data.length) {
           window.location = "/";
@@ -155,6 +159,10 @@ export default {
   },
 
   methods: {
+    appendMe(id) {
+      return id === this.accountId ? ' (Me)' : '';
+    },
+
     onSubmit(evt) {
       var that = this;
 
@@ -162,7 +170,7 @@ export default {
 
       axios.post(
         `http://localhost:8000/api/accounts/${
-          this.$route.params.id
+          this.accountId
         }/transactions`,
 
         this.payment
@@ -174,7 +182,7 @@ export default {
       // update items
       setTimeout(() => {
         axios
-          .get(`http://localhost:8000/api/accounts/${this.$route.params.id}`)
+          .get(`http://localhost:8000/api/accounts/${this.accountId}`)
           .then(function(response) {
             if (!response.data.length) {
               window.location = "/";
@@ -186,7 +194,7 @@ export default {
         axios
           .get(
             `http://localhost:8000/api/accounts/${
-              that.$route.params.id
+              that.accountId
             }/transactions`
           )
           .then(function(response) {
