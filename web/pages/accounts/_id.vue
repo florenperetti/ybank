@@ -1,7 +1,7 @@
 <template>
   <div>
     <div class="container" v-if="loading">loading...</div>
-    <div class="container" v-if="!loading">
+    <div class="container" v-else>
       <b-alert :show="errorMessage" variant="warning" dismissible>{{errorMessage}}</b-alert>
       <b-card :header="'Welcome, ' + account.name" class="mt-3">
         <b-card-text>
@@ -66,7 +66,7 @@
             ></b-form-input>
           </b-form-group>
 
-          <b-button type="submit" size="sm" variant="primary">Submit</b-button>
+          <b-button :disabled="loadingAddTransaction" type="submit" size="sm" variant="primary">Submit</b-button>
         </b-form>
       </b-card>
 
@@ -77,7 +77,7 @@
   </div>
 </template>
 
-<script lang="ts">
+<script>
 import axios from "axios";
 import Vue from "vue";
 import { mapMutations } from 'vuex';
@@ -98,6 +98,8 @@ export default {
       },
 
       loading: true,
+
+      loadingAddTransaction: false,
 
       errorMessage: null
     };
@@ -170,6 +172,7 @@ export default {
     async onSubmit(evt) {
       evt.preventDefault();
       this.errorMessage = null;
+      this.loadingAddTransaction = true;
       try {
         const result = await axios.post(
           `http://localhost:8000/api/accounts/${this.routeAccountId}/transactions`,
@@ -180,6 +183,8 @@ export default {
         this.show = false;
       } catch (error) {
         this.errorMessage = 'Something went wrong. Please check the data sent and try again.';
+      } finally {
+        this.loadingAddTransaction = false;
       }
     },
 
