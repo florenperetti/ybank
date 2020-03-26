@@ -14,13 +14,7 @@ use Illuminate\Support\Facades\Route;
   |
 */
 
-Route::get('accounts/{id}', function ($id) {
-    $account = DB::table('accounts')
-             ->whereRaw("id=$id")
-             ->get();
-
-    return $account;
-});
+Route::get('accounts/{account}', 'AccountsController@show');
 
 Route::get('accounts/{id}/transactions', function ($id) {
     $account = DB::table('transactions')
