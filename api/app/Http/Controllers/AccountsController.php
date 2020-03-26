@@ -8,16 +8,6 @@ use App\Account;
 
 class AccountsController extends Controller
 {
-    public static function respondNotFound(string $msg = 'Account does not exist')
-    {
-        $error['status_code'] = 404;
-        if (!!$msg) {
-            $error['message'] = $msg;
-        }
-
-        return response()->json(compact('error'), 404);
-    }
-
     /**
      * Display a listing of the resource.
      *
@@ -47,11 +37,7 @@ class AccountsController extends Controller
      */
     public function show(Account $account)
     {
-        try {
-            return response()->json([$account]);
-        } catch (\Exception $e) {
-            return $this->respondNotFound();
-        }
+        return response()->json([$account]);
     }
 
     /**
