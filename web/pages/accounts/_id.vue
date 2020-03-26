@@ -3,6 +3,7 @@
     <div class="container" v-if="loading">loading...</div>
 
     <div class="container" v-if="!loading">
+      <b-alert :show="errorMessage" variant="warning" dismissible>{{errorMessage}}</b-alert>
       <b-card :header="'Welcome, ' + account.name" class="mt-3">
         <b-card-text>
           <div>
@@ -100,7 +101,9 @@ export default {
       account: null,
       transactions: null,
 
-      loading: true
+      loading: true,
+
+      errorMessage: null
     };
   },
 
@@ -122,51 +125,28 @@ export default {
     }
   },
 
-  mounted() {
-    const that = this;
+  async mounted () {
+    try {
+      const promises = [
+        axios.get(`http://localhost:8000/api/accounts/${this.accountId}`),
+        axios.get(`http://localhost:8000/api/accounts/${this.$route.params.id}/transactions`)
+      ]
 
-    axios
-      .get(`http://localhost:8000/api/accounts/${this.accountId}`)
-      .then(function(response) {
-        if (!response.data.length) {
-          window.location = "/";
-        } else {
-          that.account = response.data[0];
-
-          if (that.account && that.transactions) {
-            that.loading = false;
-          }
+      const [ accountResponse, transactionsResponse ] = await Promise.all(promises);
+      if (!accountResponse.data.length) {
+        window.location = "/";
+      } else {
+        this.account = accountResponse.data[0];
+        if (this.account && this.transactions) {
+          this.loading = false;
         }
-      });
-
-    axios
-      .get(
-        `http://localhost:8000/api/accounts/${
-          that.$route.params.id
-        }/transactions`
-      )
-      .then(function(response) {
-        that["transactions"] = response.data;
-
-        var transactions = [];
-        for (let i = 0; i < that.transactions.length; i++) {
-          that.transactions[i].amount =
-            (that.account.currency === "usd" ? "$" : "€") +
-            that.transactions[i].amount;
-
-          if (that.account.id != that.transactions[i].to) {
-            that.transactions[i].amount = "-" + that.transactions[i].amount;
-          }
-
-          transactions.push(that.transactions[i]);
-        }
-
-        that.transactions = transactions;
-
-        if (that.account && that.transactions) {
-          that.loading = false;
-        }
-      });
+      }
+      this.transactions = transactionsResponse.data.map(this.formatTransactions);
+      if (this.account && this.transactions) {
+        this.loading = false;
+      }
+    } catch (error) {
+    }
   },
 
   methods: {
@@ -174,18 +154,26 @@ export default {
       return id === this.accountId ? ' (Me)' : '';
     },
 
+    formatTransactions(t) {
+      return {
+        ...t,
+        amount: this.accountId === t.from ? `-€${t.amount}` : `€${t.amount}`
+      };
+    },
+
     async onSubmit(evt) {
       evt.preventDefault();
+      this.errorMessage = null;
       try {
         const result = await axios.post(
           `http://localhost:8000/api/accounts/${this.accountId}/transactions`,
           this.payment
         );
         this.payment = { from: this.currentId, ...INITIAL_PAYMENT };
-        this.transactions.push(result);
+        this.transactions.push(this.formatTransactions(result.data));
         this.show = false;
       } catch (error) {
-
+        this.errorMessage = 'Something went wrong. Please check the data sent and try again.';
       }
     }
   }

@@ -44,7 +44,7 @@ class TransactionsController extends Controller
 
         $newTransaction = Transaction::create($validatedData);
 
-        return response()->json($newTransaction);
+        return response()->json($newTransaction->load(['accountFrom', 'accountTo']));
     }
 
     /**
