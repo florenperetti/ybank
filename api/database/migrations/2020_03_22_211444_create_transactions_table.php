@@ -19,6 +19,15 @@ class CreateTransactionsTable extends Migration
             $table->bigInteger('to')->unsigned();
             $table->text('details');
             $table->float('amount');
+
+            $table->foreign('from')
+                ->references('id')
+                ->on('accounts')
+                ->onDelete('cascade');
+            $table->foreign('to')
+                ->references('id')
+                ->on('accounts')
+                ->onDelete('cascade');
         });
     }
 
