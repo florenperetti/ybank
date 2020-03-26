@@ -8,6 +8,8 @@ class Account extends Model
 {
     protected $fillable = [ 'name', 'balance' ];
 
+    public $timestamps = false;
+
     public function transactions() {
         return Transaction::where(function($q) {
             $q->where('from', $this->id)

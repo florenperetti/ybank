@@ -28,7 +28,23 @@ class TransactionsController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        $account = Account::find($request->id);
+        if ($request->id != $request->input('from')) {
+            return response()->json([ 'status' => 'failed', 'message' => 'Unauthorized' ], 401);
+        }
+        if ($account->balance < $request->input('amount')) {
+            return response()->json([ 'status' => 'failed', 'message' => 'Enter a valid amount' ], 400);
+        }
+        $validatedData = $request->validate([
+            'from' => 'required|exists:accounts,id',
+            'to' => 'required|exists:accounts,id',
+            'amount' => 'required|min:1',
+            'details' => 'required'
+        ]);
+
+        $newTransaction = Transaction::create($validatedData);
+
+        return response()->json($newTransaction);
     }
 
     /**
