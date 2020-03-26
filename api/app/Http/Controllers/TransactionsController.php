@@ -29,7 +29,7 @@ class TransactionsController extends Controller
     public function store(Request $request)
     {
         $account = Account::find($request->id);
-        if ($request->id != $request->input('from')) {
+        if ($request->id != $request->input('from') || $request->id == $request->input('to')) {
             return response()->json([ 'status' => 'failed', 'message' => 'Unauthorized' ], 401);
         }
         if ($account->balance < $request->input('amount')) {
