@@ -10,15 +10,13 @@
           <b-form-input
             id="input"
             type="number"
-            v-model="accountID"
+            v-model.number="accountID"
             required
             placeholder="Account ID"
           ></b-form-input>
         </b-form-group>
 
-        <b-button nuxt-link :to="'/accounts/' + accountID" variant="primary"
-          >Login</b-button
-        >
+        <b-button @click="handleLogin" variant="primary">Login</b-button>
       </b-form>
     </div>
   </div>
@@ -26,6 +24,7 @@
 
 <script lang="ts">
 import Vue from "vue";
+import { mapMutations } from 'vuex';
 
 export default Vue.extend({
   data() {
@@ -33,7 +32,17 @@ export default Vue.extend({
       accountID: 1
     };
   },
-  components: {}
+  methods: {
+    handleLogin () {
+      this.login(this.accountID);
+      this.$router.push({
+        path: '/accounts/' + this.accountID
+      });
+    },
+    ...mapMutations({
+      login: 'auth/login'
+    })
+  }
 });
 </script>
 

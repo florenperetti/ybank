@@ -1,7 +1,6 @@
 <template>
   <div>
     <div class="container" v-if="loading">loading...</div>
-
     <div class="container" v-if="!loading">
       <b-alert :show="errorMessage" variant="warning" dismissible>{{errorMessage}}</b-alert>
       <b-card :header="'Welcome, ' + account.name" class="mt-3">
@@ -25,8 +24,7 @@
           class="float-right"
           variant="danger"
           size="sm"
-          nuxt-link
-          to="/"
+          @click="handleLogout"
           >Logout</b-button
         >
       </b-card>
@@ -82,6 +80,7 @@
 <script lang="ts">
 import axios from "axios";
 import Vue from "vue";
+import { mapMutations } from 'vuex';
 
 const INITIAL_PAYMENT = {
   to: null,
@@ -104,7 +103,10 @@ export default {
     };
   },
 
-  asyncData ({ params, error, $axios }) {
+  asyncData ({ params, error, $axios, store, redirect }) {
+    if (!store.state.auth.id || store.state.auth.id !== Number(params.id)) {
+      return redirect('/');
+    }
     const promises = [
       $axios.get(`http://localhost:8000/api/accounts/${params.id}`),
       $axios.get(`http://localhost:8000/api/accounts/${params.id}/transactions`)
@@ -128,8 +130,12 @@ export default {
   },
 
   computed: {
-    accountId() {
+    routeAccountId() {
       return Number(this.$route.params.id);
+    },
+
+    userId() {
+      return this.$store.state.auth.id;
     },
 
     transactionsFormatted() {
@@ -146,14 +152,18 @@ export default {
   },
 
   methods: {
+    ...mapMutations({
+      logout: 'auth/logout'
+    }),
+
     appendMe(id) {
-      return id === this.accountId ? ' (Me)' : '';
+      return id === this.userId ? ' (Me)' : '';
     },
 
     formatTransactions(t) {
       return {
         ...t,
-        amount: this.accountId === t.from ? `-€${t.amount}` : `€${t.amount}`
+        amount: this.userId === t.from ? `-€${t.amount}` : `€${t.amount}`
       };
     },
 
@@ -162,7 +172,7 @@ export default {
       this.errorMessage = null;
       try {
         const result = await axios.post(
-          `http://localhost:8000/api/accounts/${this.accountId}/transactions`,
+          `http://localhost:8000/api/accounts/${this.routeAccountId}/transactions`,
           this.payment
         );
         this.payment = { from: this.currentId, ...INITIAL_PAYMENT };
@@ -171,6 +181,13 @@ export default {
       } catch (error) {
         this.errorMessage = 'Something went wrong. Please check the data sent and try again.';
       }
+    },
+
+    handleLogout() {
+      this.logout();
+      this.$router.push({
+        path: '/'
+      });
     }
   }
 };
